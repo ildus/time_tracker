@@ -7,7 +7,12 @@ ApplicationWindow {
     width: 640
     height: 480
 
-    MenuBar {
+    property var activityStarted: false
+    property var currentActivity: ""
+    property var duration: ""
+    property var tags: []
+
+    menuBar: MenuBar {
         Menu {
             title: "Tracking"
             MenuItem { text: "Preferences" }
@@ -24,16 +29,57 @@ ApplicationWindow {
         spacing: 5
         height: 60
 
+        Item {
+            visible: activityStarted
+            Layout.fillWidth: true
+            Layout.alignment: Qt.AlignLeft
+            Layout.preferredHeight: 40
+
+            Label {
+                anchors.top: parent.top
+                id: lblCurrentActivity
+                text: currentActivity
+                font.pixelSize: 22
+                font.bold: true
+            }
+
+            Label {
+                anchors.top: lblCurrentActivity.bottom
+                anchors.left: parent.left
+                font.pixelSize: 12
+                font.bold: true
+                text: duration
+            }
+
+            Item {
+                anchors.left: lblCurrentActivity.right
+                anchors.leftMargin: 10
+
+                RowLayout {
+                    id: rowTags
+                }
+            }
+
+        }
+
         Label {
+            visible: !activityStarted
             text: "No activity"
             font.pixelSize: 22
             font.bold: true
+            Layout.alignment: Qt.AlignLeft
             Layout.fillWidth: true
         }
 
         Button {
+            id: btnStopTracking
             text: "Stop tracking"
-            enabled: false
+            enabled: activityStarted
+            onClicked: {
+                ctrl.stopActivity()
+                txtActivity.focus = true
+            }
+            Layout.alignment: Qt.AlignRight
         }
     }
 
@@ -46,18 +92,27 @@ ApplicationWindow {
         spacing: 5
 
         TextField  {
+            id: txtActivity
             Layout.minimumWidth: 300
             focus: true
             placeholderText: "Activity"
         }
 
         TextField  {
+            id: txtTags
             placeholderText: "Tags"
             Layout.fillWidth: true
         }
 
         Button {
+            id: btnStartTracking
             text: "Start tracking"
+            enabled: !activityStarted
+            onClicked: {
+                ctrl.newActivity(txtActivity.text, txtTags.text)
+                txtActivity.text = ""
+                txtTags.text = ""
+            }
         }
     }
 
@@ -87,12 +142,19 @@ ApplicationWindow {
 
         ListModel {
            id: taskModel
-           ListElement{ start: "11:00" ; activity: "Counters"; time: "1h 23m"}
+           ListElement{ day: "Today"; start: "11:00" ; activity: "Counters (mf #1231)"; time: "1h 23m"}
            ListElement{ start: "13:00" ; activity: "Something important"; time: "1h 23m"}
            ListElement{ start: "22:00" ; activity: "Analytics"; time: "1h 23m"}
+
+           ListElement{ day: "Yesterday"; start: "09:00" ; activity: "Work work work"; time: "1h 23m"}
+           ListElement{ start: "15:00" ; activity: "Surfing"; time: "1h 23m"}
+
+           ListElement{ day: "15 Feb 2014"; start: "09:00" ; activity: "Pets"; time: "1h 23m"}
+           ListElement{ start: "15:00" ; activity: "Surfing"; time: "1h 23m"}
         }
 
         TableView {
+            TableViewColumn{ role: "day"  ; title: "Day" ; width: 100}
             TableViewColumn{ role: "start"  ; title: "Start" ; width: 100 }
             TableViewColumn{ role: "activity" ; title: "Activity" ; width: 300 }
             TableViewColumn{
