@@ -11,6 +11,7 @@ ApplicationWindow {
     property var currentActivity: ""
     property var duration: ""
     property var tags: []
+    property var lastDayText: ""
 
     menuBar: MenuBar {
         Menu {
@@ -140,19 +141,6 @@ ApplicationWindow {
         anchors.margins: 10
         spacing: 5
 
-        ListModel {
-           id: taskModel
-           ListElement{ day: "Today"; start: "11:00" ; activity: "Counters (mf #1231)"; time: "1h 23m"}
-           ListElement{ start: "13:00" ; activity: "Something important"; time: "1h 23m"}
-           ListElement{ start: "22:00" ; activity: "Analytics"; time: "1h 23m"}
-
-           ListElement{ day: "Yesterday"; start: "09:00" ; activity: "Work work work"; time: "1h 23m"}
-           ListElement{ start: "15:00" ; activity: "Surfing"; time: "1h 23m"}
-
-           ListElement{ day: "15 Feb 2014"; start: "09:00" ; activity: "Pets"; time: "1h 23m"}
-           ListElement{ start: "15:00" ; activity: "Surfing"; time: "1h 23m"}
-        }
-
         TableView {
             TableViewColumn{ role: "day"  ; title: "Day" ; width: 100}
             TableViewColumn{ role: "start"  ; title: "Start" ; width: 100 }
@@ -162,7 +150,20 @@ ApplicationWindow {
                 title: "Time" ;
             }
             headerVisible: false
-            model: taskModel
+            model: ctrl.activitiesLen
+            itemDelegate: Item {
+                anchors.margins: 10
+                anchors.fill: parent
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#300006"
+                    text: ctrl.activities[row].name
+                    Component.onCompleted: {
+                        lastDayText = "";
+                    }
+                }
+            }
 
             Layout.fillWidth: true
             Layout.fillHeight: true
