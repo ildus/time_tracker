@@ -1,6 +1,7 @@
 import QtQuick 2.2
 import QtQuick.Controls 1.2
 import QtQuick.Layouts 1.1
+import QtQuick.Window 2.2
 
 ApplicationWindow {
     title: "Time Tracker"
@@ -12,6 +13,17 @@ ApplicationWindow {
     property var duration: ""
     property var tags: []
     property var lastDayText: ""
+
+    Window {
+        id: dropdown
+        title: "Editing"
+        visible: false
+        width: 400
+        height: 300
+        Label {
+            text: "Some text"
+        }
+    }
 
     menuBar: MenuBar {
         Menu {
@@ -149,16 +161,51 @@ ApplicationWindow {
                 role: "time" ;
                 title: "Time" ;
             }
+
             headerVisible: false
             model: ctrl.activitiesLen
+
+            Menu {
+                id: contextMenu
+                MenuItem {
+                    text: "Edit"
+                    onTriggered: {
+                        dropdown.visible = true;
+                    }
+                }
+                MenuItem {
+                    text: "Delete"
+                }
+            }
             itemDelegate: Item {
                 anchors.margins: 10
                 anchors.fill: parent
 
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.RightButton
+
+                    onClicked: {
+                        contextMenu.popup()
+                    }
+                }
+
                 Text {
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#300006"
-                    text: ctrl.activities[row].name
+                    text: {
+                        var row = styleData.row, col = styleData.column;
+                        if (col == 2) {
+                            return ctrl.activity(row).name
+                        } else if (col == 3) {
+                            return ctrl.activity(row).duration
+                        } else if (col == 0) {
+                            return ctrl.activity(row).dayName
+                        } else if (col == 1) {
+                            return ctrl.activity(row).timePeriod
+                        }
+                        return ""
+                    }
                     Component.onCompleted: {
                         lastDayText = "";
                     }
