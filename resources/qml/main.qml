@@ -13,6 +13,7 @@ ApplicationWindow {
     property var duration: ""
     property int tagsCount: 0
     property var lastDayText: ""
+    property var todayText: "No records today"
 
     Window {
         id: dropdown
@@ -350,7 +351,7 @@ ApplicationWindow {
         spacing: 5
 
         Label {
-            text: "No records today"
+            text: todayText
         }
 
         Button {

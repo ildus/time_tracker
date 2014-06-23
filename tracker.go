@@ -48,15 +48,7 @@ func (a *Activity) UpdateFields() {
 	a.TimePeriod = a.GetTimePeriod()
 }
 
-func (a *Activity) GetDuration() string {
-	var duration time.Duration
-	var result string
-	if a.End.IsZero() {
-		duration = time.Since(a.Start)
-	} else {
-		duration = a.End.Sub(a.Start)
-	}
-
+func verboseDuration(duration time.Duration) (result string) {
 	if (duration.Minutes()) < 1 {
 		result = ONE_MIN_LESS_TEXT_HEADER
 	} else {
@@ -69,15 +61,30 @@ func (a *Activity) GetDuration() string {
 	return result
 }
 
-func (a *Activity) GetTableDuration() string {
+func (a *Activity) GetDuration() time.Duration {
+	var duration time.Duration
+	if a.End.IsZero() {
+		duration = time.Since(a.Start)
+	} else {
+		duration = a.End.Sub(a.Start)
+	}
+	return duration
+}
+
+func (a *Activity) GetDurationText() string {
 	duration := a.GetDuration()
+	return verboseDuration(duration)
+}
+
+func (a *Activity) GetTableDuration() string {
+	duration := a.GetDurationText()
 	if strings.EqualFold(duration, ONE_MIN_LESS_TEXT_HEADER) {
 		return ONE_MIN_LESS_TEXT_TABLE
 	}
 	return duration
 }
 
-func (a *Activity) GetDay() string {
+func getToday() time.Time {
 	today := time.Now()
 	d := time.Duration(-today.Hour())*time.Hour + 6*time.Hour
 	today = today.Add(d)
@@ -86,7 +93,11 @@ func (a *Activity) GetDay() string {
 	if time.Now().Hour() < 6 {
 		today = today.Add(-24 * time.Hour)
 	}
+	return today
+}
 
+func (a *Activity) GetDay() string {
+	today := getToday()
 	yesterday := today.Add(-24 * time.Hour)
 
 	if a.Start.After(today) {
@@ -203,6 +214,14 @@ func (c *Control) UpdateAllFields() {
 
 		last = act
 	}
+
+	var todayDuration time.Duration
+	for _, a := range ctrl.Activities {
+		todayDuration += a.GetDuration()
+	}
+	if todayDuration > 0 {
+		ctrl.Root.Set("todayText", "Today: "+verboseDuration(todayDuration))
+	}
 }
 
 func (c *Control) UpdateActivities() {
@@ -255,7 +274,7 @@ func getDatabase() gorm.DB {
 
 func updateCurrentDuration(currentTime time.Time) {
 	if ctrl.CurrentActivity != nil {
-		ctrl.Root.Set("duration", ctrl.CurrentActivity.GetDuration())
+		ctrl.Root.Set("duration", ctrl.CurrentActivity.GetDurationText())
 	}
 }
 
