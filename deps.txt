@@ -1,0 +1,11 @@
+github.com/jinzhu/gorm
+github.com/mattn/go-sqlite3
+gopkg.in/qml.v0
+
+# on mac os mavericks
+#   brew install qt5
+
+# on linux
+#   $ sudo add-apt-repository ppa:ubuntu-sdk-team/ppa
+#   $ sudo apt-get update
+#   $ sudo apt-get install ubuntu-sdk qtbase5-private-dev qtdeclarative5-private-dev libqt5opengl5-dev
