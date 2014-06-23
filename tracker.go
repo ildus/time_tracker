@@ -136,13 +136,19 @@ func (c *Control) NewActivity(name string, tags string) {
 		ForeignTags: activityTags,
 		Tags:        tags,
 	}
-	c.CurrentActivity = activity
 	c.SaveActivity(activity)
 	c.SetCurrentActivity(activity)
 }
 
+func (c *Control) CopyActivity(index int) {
+	if c.CurrentActivity == nil {
+		activity := c.Activities[index]
+		c.NewActivity(activity.Name, activity.Tags)
+	}
+}
+
 func (c *Control) StopActivity() {
-	if c.CurrentActivity.End.IsZero() {
+	if c.CurrentActivity != nil {
 		c.CurrentActivity.End = time.Now()
 		c.SaveActivity(c.CurrentActivity)
 		c.SetCurrentActivity(nil)
@@ -155,16 +161,17 @@ func (c *Control) SetCurrentActivity(a *Activity) {
 	if a == nil {
 		ctrl.Root.Set("currentActivity", "")
 		ctrl.Root.Set("activityStarted", false)
+		ctrl.Root.Set("tagsCount", 0)
 	} else {
 		ctrl.Root.Set("currentActivity", a.Name)
 		ctrl.Root.Set("activityStarted", true)
+		ctrl.Root.Set("tagsCount", len(a.ForeignTags))
 		updateCurrentDuration(a.Start)
 	}
 }
 
 func (c *Control) SaveActivity(activity *Activity) {
 	db.Save(activity)
-	fmt.Println(activity)
 	if activity.End.IsZero() {
 		ctrl.Activities = append(ctrl.Activities, nil)
 		copy(ctrl.Activities[1:], ctrl.Activities)
@@ -221,6 +228,13 @@ func (c *Control) LoadActivities(init bool) {
 	}
 
 	c.UpdateActivities()
+}
+
+func (c *Control) GetTag(index int) string {
+	if c.CurrentActivity != nil {
+		return c.CurrentActivity.ForeignTags[index].Tag
+	}
+	return ""
 }
 
 func getDatabase() gorm.DB {
