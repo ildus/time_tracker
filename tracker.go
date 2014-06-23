@@ -55,7 +55,8 @@ func verboseDuration(duration time.Duration) (result string) {
 		if duration.Hours() < 1 {
 			result = fmt.Sprintf("%d min", int(duration.Minutes()))
 		} else {
-			result = fmt.Sprintf("%dh %dmin", int(duration.Hours()), int(duration.Minutes()))
+			minutes := duration.Minutes() - 60*duration.Hours()
+			result = fmt.Sprintf("%dh %dmin", int(duration.Hours()), int(minutes))
 		}
 	}
 	return result
