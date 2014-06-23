@@ -9,12 +9,23 @@ Rectangle {
     z: 2
     id: baseItem
     property var value: null
+    property var valueFormatted: null
     property string placeholder: ""
+    property string defaultFormat: "dd.MM.yyyy hh:mm"
+
+    onValueChanged: {
+        valueFormatted = Qt.formatDateTime(value, defaultFormat)
+    }
 
     function setValue(dt) {
-        value = dt
-        txt.text = Qt.formatDateTime(value, "dd.MM.yyyy hh:mm")
-        datePicker.selectedDate = dt
+        if (dt) {
+            value = dt
+            txt.text = Qt.formatDateTime(value, defaultFormat)
+            datePicker.selectedDate = dt
+        } else {
+            value = null
+            txt.text = ""
+        }
     }
 
     SystemPalette { id: palette; colorGroup: SystemPalette.Active }
@@ -34,6 +45,7 @@ Rectangle {
             var dt = Date.fromLocaleString(locale, text, "d.M.yyyy h:m")
             if (isNaN(dt.getTime())) {
                 textColor = "red"
+                baseItem.value = null
             }
             else {
                 textColor = palette.windowText
@@ -90,7 +102,7 @@ Rectangle {
             onClicked: {
                 value = selectedDate
                 block.visible = false
-                txt.text = Qt.formatDateTime(value, "dd.MM.yyyy hh:mm")
+                txt.text = Qt.formatDateTime(value, defaultFormat)
             }
 
             style: CalendarStyle {

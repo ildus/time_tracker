@@ -15,6 +15,7 @@ import (
 const (
 	ONE_MIN_LESS_TEXT_HEADER = "Just started"
 	ONE_MIN_LESS_TEXT_TABLE  = "Almost nothing"
+	shortDateFormat          = "02.01.2006 15:04"
 )
 
 var (
@@ -55,8 +56,10 @@ func verboseDuration(duration time.Duration) (result string) {
 		if duration.Hours() < 1 {
 			result = fmt.Sprintf("%d min", int(duration.Minutes()))
 		} else {
-			minutes := duration.Minutes() - 60*duration.Hours()
-			result = fmt.Sprintf("%dh %dmin", int(duration.Hours()), int(minutes))
+			hours := int(duration.Hours())
+			minutes := int(duration.Minutes())
+			minutes -= 60 * hours
+			result = fmt.Sprintf("%dh %dmin", hours, minutes)
 		}
 	}
 	return result
@@ -159,12 +162,73 @@ func (c *Control) CopyActivity(index int) {
 	}
 }
 
+func (c *Control) EditActivity(index int) {
+	activity := c.Activities[index]
+	if activity != ctrl.CurrentActivity {
+		ctrl.Root.Set("activityIndex", index)
+		ctrl.Root.Set("activityName", activity.Name)
+		ctrl.Root.Set("activityTags", activity.Tags)
+		ctrl.Root.Set("activityDescription", activity.Description)
+		ctrl.Root.Set("activityStart", activity.Start.Format(shortDateFormat))
+		if !activity.End.IsZero() {
+			ctrl.Root.Set("activityEnd", activity.End.Format(shortDateFormat))
+		} else {
+			ctrl.Root.Set("activityEnd", "")
+		}
+		ctrl.Root.Call("showDropdown")
+	}
+}
+
+func (c *Control) RemoveActivity(index int) {
+	activity := c.Activities[index]
+	if activity != ctrl.CurrentActivity {
+		a := ctrl.Activities
+		ctrl.Activities = append(a[:index], a[index+1:]...)
+		db.Delete(activity)
+		c.UpdateActivities(-1)
+	}
+}
+
+func (c *Control) SaveEditedActivity(index int, name string, tags string,
+	description string,
+	start string, end string) {
+
+	var err error
+	activity := c.Activities[index]
+	if activity != ctrl.CurrentActivity {
+		tagsArr := strings.Split(tags, " ")
+		var activityTags []Tag
+		for _, tag := range tagsArr {
+			cleaned := strings.ToLower(strings.Trim(tag, " "))
+			if len(cleaned) > 1 {
+				activityTags = append(activityTags, Tag{Tag: cleaned})
+			}
+		}
+
+		activity.Name = name
+		activity.ForeignTags = activityTags
+		activity.Tags = tags
+		activity.Description = description
+		activity.Start, err = time.ParseInLocation(shortDateFormat, start, baseLocation)
+		if err != nil {
+			return
+		}
+		activity.End, err = time.ParseInLocation(shortDateFormat, end, baseLocation)
+		if err != nil {
+			return
+		}
+
+		c.SaveActivity(activity)
+		c.UpdateActivities(index)
+	}
+}
+
 func (c *Control) StopActivity() {
 	if c.CurrentActivity != nil {
 		c.CurrentActivity.End = time.Now()
 		c.SaveActivity(c.CurrentActivity)
 		c.SetCurrentActivity(nil)
-		c.UpdateActivities()
+		c.UpdateActivities(0)
 	}
 }
 
@@ -189,10 +253,10 @@ func (c *Control) SaveActivity(activity *Activity) {
 		copy(ctrl.Activities[1:], ctrl.Activities)
 		ctrl.Activities[0] = activity
 	}
-	c.UpdateActivities()
+	c.UpdateActivities(-1)
 }
 
-func (c *Control) UpdateAllFields() {
+func (c *Control) UpdateTable(idx int) {
 	defer func() {
 		if err := recover(); err != nil {
 			log.Println(err)
@@ -202,6 +266,10 @@ func (c *Control) UpdateAllFields() {
 	var last *Activity
 
 	for i := 0; i < ctrl.ActivitiesLen; i += 1 {
+		if idx != -1 && i != idx {
+			continue
+		}
+
 		act := ctrl.Activity(i)
 		act.UpdateFields()
 		if last != nil && last.DayName == act.DayName {
@@ -225,11 +293,10 @@ func (c *Control) UpdateAllFields() {
 	}
 }
 
-func (c *Control) UpdateActivities() {
+func (c *Control) UpdateActivities(idx int) {
 	ctrl.ActivitiesLen = len(ctrl.Activities)
-	ctrl.Root.Set("lastDayText", "")
 	qml.Changed(&ctrl, &ctrl.ActivitiesLen)
-	go c.UpdateAllFields()
+	go c.UpdateTable(idx)
 }
 
 func (c *Control) LoadActivities(init bool) {
@@ -247,7 +314,7 @@ func (c *Control) LoadActivities(init bool) {
 		ctrl.SetCurrentActivity(ctrl.Activity(0))
 	}
 
-	c.UpdateActivities()
+	c.UpdateActivities(-1)
 }
 
 func (c *Control) GetTag(index int) string {
@@ -284,7 +351,7 @@ func tick() {
 		timer := time.NewTimer(time.Second * 5)
 		currentTime := <-timer.C
 		updateCurrentDuration(currentTime)
-		ctrl.UpdateActivities()
+		ctrl.UpdateActivities(0)
 	}
 }
 

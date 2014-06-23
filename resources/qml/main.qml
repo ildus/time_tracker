@@ -15,6 +15,28 @@ ApplicationWindow {
     property var lastDayText: ""
     property var todayText: "No records today"
 
+    property var activityIndex: null
+    property var activityName: ""
+    property var activityTags: ""
+    property var activityStart: ""
+    property var activityEnd: ""
+    property var activityDescription: ""
+    property var locale: Qt.locale()
+
+    function showDropdown() {
+        if (activityStart)
+            dt1.setValue(Date.fromLocaleString(locale, activityStart, "d.M.yyyy h:m"))
+        else
+            dt1.setValue(null);
+
+        if (activityEnd)
+            dt2.setValue(Date.fromLocaleString(locale, activityEnd, "d.M.yyyy h:m"))
+        else
+            dt2.setValue(null);
+
+        dropdown.visible = true
+    }
+
     Window {
         id: dropdown
         title: "Editing"
@@ -33,14 +55,18 @@ ApplicationWindow {
             spacing: 5
 
             TextField  {
+                id: txtActivityName
                 Layout.minimumWidth: 300
                 focus: true
                 placeholderText: "Activity"
+                text: activityName
             }
 
             TextField  {
+                id: txtActivityTags
                 placeholderText: "Tags"
                 Layout.fillWidth: true
+                text: activityTags
             }
         }
 
@@ -61,6 +87,7 @@ ApplicationWindow {
             }
 
             Datetimepicker {
+                id: dt2
                 placeholder: "End"
                 width: 200
                 anchors.right: parent.right
@@ -72,13 +99,13 @@ ApplicationWindow {
             anchors.leftMargin: 10
             anchors.left: parent.left
             anchors.top: wrow2.bottom
-            id: txtDescription
+            id: lblDescription
             text: "Description"
         }
 
         RowLayout {
             id: wrow3
-            anchors.top: txtDescription.bottom
+            anchors.top: lblDescription.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: wrow4.top
@@ -87,8 +114,10 @@ ApplicationWindow {
             spacing: 5
 
             TextArea {
+                id: txtDescription
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                text: activityDescription
             }
         }
 
@@ -96,16 +125,51 @@ ApplicationWindow {
             id: wrow4
             height: 20
             anchors.margins: 10
+            anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.right: parent.right
 
             Button {
+                text: "Remove"
+                onClicked: {
+                    ctrl.removeActivity(activityIndex)
+                    dropdown.visible = false
+                }
+                Layout.alignment: Qt.AlignLeft
+            }
+
+            Button {
+                anchors.right: btnClose.left
+                isDefault: true
                 text: "Save activity"
-                onClicked: dropdown.visible = false
+                onClicked: {
+                    if (!dt1.value) {
+                        return
+                    }
+                    if (!dt2.value) {
+                        return
+                    }
+                    if (!activityName) {
+                        return
+                    }
+
+                    if (dt2.value <= dt1.value) {
+                        return
+                    }
+
+                    ctrl.saveEditedActivity(activityIndex,
+                                            txtActivityName.text,
+                                            txtActivityTags.text,
+                                            txtDescription.text,
+                                            dt1.valueFormatted,
+                                            dt2.valueFormatted)
+                    dropdown.visible = false
+                }
                 Layout.alignment: Qt.AlignRight
             }
 
             Button {
+                id: btnClose
                 text: "Close"
                 onClicked: dropdown.visible = false
                 Layout.alignment: Qt.AlignRight
@@ -261,12 +325,35 @@ ApplicationWindow {
         spacing: 5
 
         TableView {
-            TableViewColumn{ role: "day"  ; title: "Day" ; width: 100}
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+
+            TableViewColumn{ role: "day"  ; title: "Day" ; width: 80}
             TableViewColumn{ role: "start"  ; title: "Start" ; width: 100 }
-            TableViewColumn{ role: "activity" ; title: "Activity" ; width: 300 }
+            TableViewColumn{ role: "activity" ; title: "Activity" ; width: row4.width - 325 }
+            TableViewColumn{ role: "time" ; title: "Time"; width: 120}
             TableViewColumn{
-                role: "time" ;
-                title: "Time" ;
+                width: 20
+                role: "actions"
+                title: "Actions"
+                delegate: Item {
+                    Image {
+                        anchors.centerIn: parent
+                        width: 14
+                        height: 14
+                        source: "../images/edit.png"
+                        smooth: true
+
+                        MouseArea {
+                            anchors.fill: parent
+                            acceptedButtons: Qt.LeftButton
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                ctrl.editActivity(styleData.row)
+                            }
+                        }
+                    }
+                }
             }
 
             headerVisible: false
@@ -286,31 +373,11 @@ ApplicationWindow {
                     text: "Delete"
                 }
             }
-            rowDelegate: Rectangle {
-                color: {
-                    if (styleData.selected) {
-                        return palette.highlight
-                    } else if (styleData.alternate) {
-                        return palette.alternateBase;
-                    }
-                    return palette.base;
-                }
 
-                MouseArea {
-                    anchors.fill: parent
-                    acceptedButtons: Qt.LeftButton | Qt.RightButton
-
-                    onClicked: {
-                        if (mouse.button == Qt.RightButton)
-                            contextMenu.popup()
-                    }
-
-                    onDoubleClicked: {
-                        if (mouse.button == Qt.LeftButton)
-                            ctrl.copyActivity(styleData.row)
-                    }
-                }
+            onDoubleClicked: {
+                ctrl.copyActivity(row)
             }
+
             itemDelegate: Item {
                 anchors.margins: 10
                 anchors.fill: parent
@@ -336,9 +403,6 @@ ApplicationWindow {
                     }
                 }
             }
-
-            Layout.fillWidth: true
-            Layout.fillHeight: true
         }
     }
 
