@@ -45,6 +45,24 @@ ApplicationWindow {
         height: 270
         width: 450
 
+        SequentialAnimation {
+            id: shaking
+            running: false
+            property var target: null
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x - 5; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x + 5; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x - 3; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x + 3; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x - 1; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x + 1; duration: 50}
+            NumberAnimation { target: shaking.target; property: "x"; to: target.x; duration: 50}
+
+            function shake(obj) {
+                shaking.target = obj
+                shaking.start()
+            }
+        }
+
         RowLayout {
             id: wrow1
             height: 15
@@ -82,15 +100,16 @@ ApplicationWindow {
             Datetimepicker {
                 id: dt1
                 placeholder: "Start"
-                width: 200
-                anchors.left: parent.left
+                //width: 200
+                Layout.preferredWidth: 200
+                //anchors.left: parent.left
             }
 
             Datetimepicker {
                 id: dt2
                 placeholder: "End"
-                width: 200
-                anchors.right: parent.right
+                Layout.preferredWidth: 200
+                Layout.alignment: Qt.AlignRight
             }
         }
 
@@ -144,16 +163,20 @@ ApplicationWindow {
                 text: "Save activity"
                 onClicked: {
                     if (!dt1.value) {
+                        shaking.shake(dt1)
                         return
                     }
                     if (!dt2.value) {
+                        shaking.shake(dt2)
                         return
                     }
-                    if (!activityName) {
+                    if (!txtActivityName.text) {
+                        shaking.shake(txtActivityName)
                         return
                     }
 
                     if (dt2.value <= dt1.value) {
+                        shaking.shake(dt1)
                         return
                     }
 

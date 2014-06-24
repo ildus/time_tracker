@@ -93,7 +93,7 @@ func getToday() time.Time {
 	d := time.Duration(-today.Hour())*time.Hour + 6*time.Hour
 	today = today.Add(d)
 
-	//if new day has started today is yesterday
+	//if new day has started today is `day
 	if time.Now().Hour() < 6 {
 		today = today.Add(-24 * time.Hour)
 	}
@@ -263,7 +263,7 @@ func (c *Control) UpdateTable(idx int) {
 		}
 	}()
 
-	var last *Activity
+	var lastDayName string
 
 	for i := 0; i < ctrl.ActivitiesLen; i += 1 {
 		if idx != -1 && i != idx {
@@ -272,7 +272,7 @@ func (c *Control) UpdateTable(idx int) {
 
 		act := ctrl.Activity(i)
 		act.UpdateFields()
-		if last != nil && last.DayName == act.DayName {
+		if lastDayName != "" && lastDayName == act.DayName {
 			act.DayName = ""
 		}
 
@@ -281,15 +281,22 @@ func (c *Control) UpdateTable(idx int) {
 		qml.Changed(act, &act.TimePeriod)
 		qml.Changed(act, &act.DayName)
 
-		last = act
+		if len(act.DayName) > 0 {
+			lastDayName = act.DayName
+		}
 	}
 
 	var todayDuration time.Duration
+	today := getToday()
 	for _, a := range ctrl.Activities {
-		todayDuration += a.GetDuration()
+		if a.Start.After(today) {
+			todayDuration += a.GetDuration()
+		}
 	}
 	if todayDuration > 0 {
 		ctrl.Root.Set("todayText", "Today: "+verboseDuration(todayDuration))
+	} else {
+		ctrl.Root.Set("todayText", "")
 	}
 }
 
