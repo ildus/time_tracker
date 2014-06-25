@@ -308,7 +308,7 @@ func (c *Control) UpdateActivities(idx int) {
 
 func (c *Control) LoadActivities(init bool) {
 	var activities []Activity
-	dt := time.Now().Add(-time.Hour * 24 * 3)
+	dt := getToday().Add(-time.Hour * 24 * 31)
 	db.Order("start desc").Where("start >= ?", dt).Find(&activities)
 	for _, v := range activities {
 		var activity = v
