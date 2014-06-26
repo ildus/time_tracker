@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -135,7 +136,7 @@ func (c *Control) Activity(index int) *Activity {
 	return activity
 }
 
-func (c *Control) NewActivity(name string, tags string) {
+func parseTags(tags string) []Tag {
 	tagsArr := strings.Split(tags, " ")
 	var activityTags []Tag
 	for _, tag := range tagsArr {
@@ -144,11 +145,14 @@ func (c *Control) NewActivity(name string, tags string) {
 			activityTags = append(activityTags, Tag{Tag: cleaned})
 		}
 	}
+	return activityTags
+}
 
+func (c *Control) NewActivity(name string, tags string) {
 	activity := &Activity{
 		Start:       time.Now(),
 		Name:        name,
-		ForeignTags: activityTags,
+		ForeignTags: parseTags(tags),
 		Tags:        tags,
 	}
 	c.SaveActivity(activity)
@@ -179,7 +183,22 @@ func (c *Control) EditActivity(index int) {
 	}
 }
 
+func (c *Control) AddEarlierActivity() {
+	ctrl.Root.Set("activityIndex", -1)
+	ctrl.Root.Set("activityName", "")
+	ctrl.Root.Set("activityTags", "")
+	ctrl.Root.Set("activityDescription", "")
+	ctrl.Root.Set("activityStart", "")
+	ctrl.Root.Set("activityEnd", "")
+	ctrl.Root.Call("showDropdown")
+}
+
 func (c *Control) RemoveActivity(index int) {
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+	}()
 	activity := c.Activities[index]
 	if activity != ctrl.CurrentActivity {
 		a := ctrl.Activities
@@ -189,24 +208,34 @@ func (c *Control) RemoveActivity(index int) {
 	}
 }
 
+type ByStart []*Activity
+
+func (a ByStart) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+func (a ByStart) Less(i, j int) bool {
+	return a[i].Start.After(a[j].Start)
+}
+func (a ByStart) Len() int {
+	return len(a)
+}
+
 func (c *Control) SaveEditedActivity(index int, name string, tags string,
 	description string,
 	start string, end string) {
 
-	var err error
-	activity := c.Activities[index]
+	var (
+		err      error
+		activity *Activity
+	)
+	if index == -1 {
+		activity = &Activity{}
+	} else {
+		activity = c.Activities[index]
+	}
 	if activity != ctrl.CurrentActivity {
-		tagsArr := strings.Split(tags, " ")
-		var activityTags []Tag
-		for _, tag := range tagsArr {
-			cleaned := strings.ToLower(strings.Trim(tag, " "))
-			if len(cleaned) > 1 {
-				activityTags = append(activityTags, Tag{Tag: cleaned})
-			}
-		}
-
 		activity.Name = name
-		activity.ForeignTags = activityTags
+		activity.ForeignTags = parseTags(tags)
 		activity.Tags = tags
 		activity.Description = description
 		activity.Start, err = time.ParseInLocation(shortDateFormat, start, baseLocation)
@@ -219,7 +248,10 @@ func (c *Control) SaveEditedActivity(index int, name string, tags string,
 		}
 
 		c.SaveActivity(activity)
-		c.UpdateActivities(index)
+		if index == -1 {
+			ctrl.Activities = append(ctrl.Activities, activity)
+		}
+		c.UpdateActivities(-1)
 	}
 }
 
@@ -301,6 +333,7 @@ func (c *Control) UpdateTable(idx int) {
 }
 
 func (c *Control) UpdateActivities(idx int) {
+	sort.Sort(ByStart(ctrl.Activities))
 	ctrl.ActivitiesLen = len(ctrl.Activities)
 	qml.Changed(&ctrl, &ctrl.ActivitiesLen)
 	go c.UpdateTable(idx)

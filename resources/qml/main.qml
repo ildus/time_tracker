@@ -445,6 +445,7 @@ ApplicationWindow {
             text: "Add earlier activity"
             Layout.alignment: Qt.AlignRight
             anchors.right: btnOverview.left
+            onClicked: ctrl.addEarlierActivity()
         }
 
         Button {
