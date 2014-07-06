@@ -206,6 +206,10 @@ ApplicationWindow {
         }
     }
 
+    OverviewWindow {
+        id: overview
+    }
+
     menuBar: MenuBar {
         Menu {
             title: "Tracking"
@@ -353,7 +357,7 @@ ApplicationWindow {
 
             TableViewColumn{ role: "day"  ; title: "Day" ; width: 80}
             TableViewColumn{ role: "start"  ; title: "Start" ; width: 100 }
-            TableViewColumn{ role: "activity" ; title: "Activity" ; width: row4.width - 325 }
+            TableViewColumn{ role: "activity" ; title: "Activity" ; width: row4.width - 345 }
             TableViewColumn{ role: "time" ; title: "Time"; width: 120}
             TableViewColumn{
                 width: 20
@@ -452,6 +456,7 @@ ApplicationWindow {
             id: btnOverview
             text: "Show overview"
             Layout.alignment: Qt.AlignRight
+            onClicked: overview.visible = true
         }
     }
 }

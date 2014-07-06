@@ -111,7 +111,11 @@ func (a *Activity) GetDay() string {
 		if a.Start.After(yesterday) {
 			return "Yesterday"
 		} else {
-			return a.Start.Format("Jan 2")
+			day := a.Start
+			if day.Hour() < 6 {
+				day.Add(-time.Hour * 24)
+			}
+			return day.Format("Jan 2")
 		}
 	}
 }
@@ -295,27 +299,27 @@ func (c *Control) UpdateTable(idx int) {
 		}
 	}()
 
-	var lastDayName string
+	// var lastDayName string
 
-	for i := 0; i < ctrl.ActivitiesLen; i += 1 {
+	for i := 0; i < len(ctrl.Activities); i += 1 {
 		if idx != -1 && i != idx {
 			continue
 		}
 
 		act := ctrl.Activity(i)
 		act.UpdateFields()
-		if lastDayName != "" && lastDayName == act.DayName {
-			act.DayName = ""
-		}
+		// if lastDayName != "" && lastDayName == act.DayName {
+		// 	act.DayName = ""
+		// }
 
 		qml.Changed(act, &act.Name)
 		qml.Changed(act, &act.Duration)
 		qml.Changed(act, &act.TimePeriod)
 		qml.Changed(act, &act.DayName)
 
-		if len(act.DayName) > 0 {
-			lastDayName = act.DayName
-		}
+		// if len(act.DayName) > 0 {
+		// 	lastDayName = act.DayName
+		// }
 	}
 
 	var todayDuration time.Duration
@@ -348,6 +352,7 @@ func (c *Control) LoadActivities(init bool) {
 		activity.End = activity.End.In(baseLocation)
 		activity.Start = activity.Start.In(baseLocation)
 		ctrl.Activities = append(ctrl.Activities, &activity)
+		activity.UpdateFields()
 	}
 
 	if len(ctrl.Activities) > 0 && ctrl.Activities[0].End.IsZero() {
@@ -391,7 +396,7 @@ func tick() {
 		timer := time.NewTimer(time.Second * 5)
 		currentTime := <-timer.C
 		updateCurrentDuration(currentTime)
-		ctrl.UpdateActivities(0)
+		ctrl.UpdateActivities(-2)
 	}
 }
 
@@ -410,7 +415,7 @@ func main() {
 	db = getDatabase()
 	qml.Init(nil)
 	engine := qml.NewEngine()
-	component, err := engine.LoadFile("resources/qml/main.qml")
+	component, err := engine.LoadFile("resources/qml/Main.qml")
 	if err != nil {
 		panic(err)
 	}
