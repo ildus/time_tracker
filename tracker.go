@@ -415,7 +415,7 @@ func main() {
 	db = getDatabase()
 	qml.Init(nil)
 	engine := qml.NewEngine()
-	component, err := engine.LoadFile("resources/qml/Main.qml")
+	component, err := engine.LoadFile("resources/qml/MainWindow.qml")
 	if err != nil {
 		panic(err)
 	}

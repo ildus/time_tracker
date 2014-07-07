@@ -5,7 +5,7 @@ gopkg.in/qml.v0
 # on mac os mavericks
 #   brew install qt5
 
-# on linux
+# on linux (Qt version must be at least >= 5.3.0)
 #   $ sudo add-apt-repository ppa:ubuntu-sdk-team/ppa
 #   $ sudo apt-get update
 #   $ sudo apt-get install ubuntu-sdk qtbase5-private-dev qtdeclarative5-private-dev libqt5opengl5-dev
