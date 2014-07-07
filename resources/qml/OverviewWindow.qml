@@ -1,3 +1,5 @@
+import QtQuick.Window 2.2
+
 Window {
     title: "Overview"
     visible: false

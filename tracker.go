@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/mattn/go-sqlite3"
-	"gopkg.in/qml.v0"
+	"gopkg.in/qml.v1"
 	"log"
 	"os"
 	"path/filepath"
@@ -400,24 +400,11 @@ func tick() {
 	}
 }
 
-func main() {
-	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-	if err != nil {
-		log.Fatal(err)
-	}
-	os.Chdir(dir)
-
-	baseLocation, err = time.LoadLocation("Local")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db = getDatabase()
-	qml.Init(nil)
+func run() error {
 	engine := qml.NewEngine()
 	component, err := engine.LoadFile("resources/qml/MainWindow.qml")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	go tick()
@@ -432,4 +419,24 @@ func main() {
 	ctrl.LoadActivities(true)
 	window.Show()
 	window.Wait()
+
+	return nil
+}
+
+func main() {
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatal(err)
+	}
+	os.Chdir(dir)
+
+	baseLocation, err = time.LoadLocation("Local")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db = getDatabase()
+	if err := qml.Run(nil, run); err != nil {
+		log.Fatalf("Error: %v\n", err)
+	}
 }
