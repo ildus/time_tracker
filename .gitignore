@@ -1,5 +1,6 @@
 .DS_Store
 /tracker
+/time_tracker
 /tracker.app
 *.conf
 *.log

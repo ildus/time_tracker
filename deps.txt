@@ -1,11 +1,19 @@
-github.com/jinzhu/gorm
-github.com/mattn/go-sqlite3
-gopkg.in/qml.v0
+go get github.com/jinzhu/gorm
+go get github.com/mattn/go-sqlite3
+git clone -b v1-dev https://github.com/go-qml/qml.git $GOPATH/src/gopkg.in/qml.v1
 
 # on mac os mavericks
 #   brew install qt5
 
-# on linux (Qt version must be at least >= 5.3.0)
-#   $ sudo add-apt-repository ppa:ubuntu-sdk-team/ppa
-#   $ sudo apt-get update
-#   $ sudo apt-get install ubuntu-sdk qtbase5-private-dev qtdeclarative5-private-dev libqt5opengl5-dev
+# on linux (Qt version must be at least >= 5.3.1)
+    1) install Qt from http://qt-project.org/downloads
+    2) export QT5DIR=/opt/Qt/5.3/gcc_64
+    3) ln -svfn $QT5DIR /opt/qt5
+    4) ln -s /opt/qt5/bin/qmake /usr/bin/qmake
+    5) add to .bashrc:
+
+        QT5DIR=/opt/qt5
+        export PATH=$PATH:/opt/qt5/bin
+        export PKG_CONFIG_PATH=/opt/qt5/lib/pkgconfig
+        export QT5DIR
+        export LD_LIBRARY_PATH=/opt/qt5/lib
