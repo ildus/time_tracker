@@ -210,14 +210,6 @@ ApplicationWindow {
         id: overview
     }
 
-    menuBar: MenuBar {
-        Menu {
-            title: "Tracking"
-            MenuItem { text: "Preferences" }
-            MenuItem { text: "Close" }
-        }
-    }
-
     RowLayout {
         id: row1
         anchors.top: parent.top

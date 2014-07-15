@@ -2,6 +2,7 @@ go get github.com/jinzhu/gorm
 go get github.com/mattn/go-sqlite3
 git clone -b v1-dev https://github.com/go-qml/qml.git $GOPATH/src/gopkg.in/qml.v1
 
+# Qt
 # on mac os mavericks
 #   brew install qt5
 

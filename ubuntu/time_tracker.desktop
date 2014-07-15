@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Time Tracker
+Comment=Time tracking application
+Exec=env LD_LIBRARY_PATH=/opt/qt5/lib /home/ildus/bin/time_tracker/time_tracker
+Icon=/home/ildus/bin/time_tracker/resources/images/time_ubuntu.png
+Terminal=false
+Type=Application
+Categories=Utility;Application;
